@@ -277,7 +277,7 @@ DELIM[[BRCATCODE]] <- c('<*=', '*>')
                 line <- ''
             }
         } else {
-            if (regexpr('*>', line, perl = TRUE) > 0){
+            if (regexpr('\*>', line, perl = TRUE) > 0){
                 spl <- strsplit(line, '*>', fixed = TRUE)[[1]]
                 line <- paste(spl[-1], collapse = '*>')
 
@@ -304,7 +304,7 @@ DELIM[[BRCATCODE]] <- c('<*=', '*>')
                 }
                 textStart <- textLen + 1
                 state <- BRTEXT
-            } else if (regexpr('<*', line, perl = TRUE) > 0){
+            } else if (regexpr('<\*', line, perl = TRUE) > 0){
                 stop('Oops! Someone forgot to close a tag. We saw: ',
                      DELIM[[state]][1], ' and we need ',
                      DELIM[[state]][2])
