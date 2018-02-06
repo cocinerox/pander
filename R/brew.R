@@ -1,6 +1,6 @@
 #' Brew in pandoc format
 #'
-#' This function behaves just like \code{brew} except for the \code{<\%=...\%>} tags, where \code{Pandoc.brew} first translate the R object found between the tags to Pandoc's markdown before passing to the \code{cat} function.
+#' This function behaves just like \code{brew} except for the \code{<*=...*>} tags, where \code{Pandoc.brew} first translate the R object found between the tags to Pandoc's markdown before passing to the \code{cat} function.
 #'
 #' This parser tries to be smart in some ways:
 #'
@@ -32,15 +32,15 @@
 #' }
 #' @examples \dontrun{
 #' text <- paste('# Header', '',
-#'   'What a lovely list:\n<%=as.list(runif(10))%>',
-#'   'A wide table:\n<%=mtcars[1:3, ]%>',
-#'   'And a nice chart:\n\n<%=plot(1:10)%>', sep = '\n')
+#'   'What a lovely list:\n<*=as.list(runif(10))*>',
+#'   'A wide table:\n<*=mtcars[1:3, ]*>',
+#'   'And a nice chart:\n\n<*=plot(1:10)*>', sep = '\n')
 #' Pandoc.brew(text = text)
 #' Pandoc.brew(text = text, output = tempfile(), convert = 'html')
 #' Pandoc.brew(text = text, output = tempfile(), convert = 'pdf')
 #'
 #' ## pi is awesome
-#' Pandoc.brew(text='<%for (i in 1:5) {%>\n Pi has a lot (<%=i%>) of power: <%=pi^i%><%}%>')
+#' Pandoc.brew(text='<*for (i in 1:5) {*>\n Pi has a lot (<*=i*>) of power: <*=pi^i*><*}*>')
 #'
 #' ## package bundled examples
 #' Pandoc.brew(system.file('examples/minimal.brew', package='pander'))
@@ -51,14 +51,14 @@
 #'   output = tempfile(), convert = 'html')
 #'
 #' ## brew returning R objects
-#' str(Pandoc.brew(text='Pi equals to <%=pi%>.
-#' And here are some random data:\n<%=runif(10)%>'))
+#' str(Pandoc.brew(text='Pi equals to <*=pi*>.
+#' And here are some random data:\n<*=runif(10)*>'))
 #'
-#' str(Pandoc.brew(text='# Header <%=1%>\nPi is <%=pi%> which is smaller then <%=2%>.
-#' foo\nbar\n <%=3%>\n<%=mtcars[1:2,]%>'))
+#' str(Pandoc.brew(text='# Header <*=1*>\nPi is <*=pi*> which is smaller then <*=2*>.
+#' foo\nbar\n <*=3*>\n<*=mtcars[1:2,]*>'))
 #'
-#' str(Pandoc.brew(text='<%for (i in 1:5) {%>
-#' Pi has a lot (<%=i%>) of power: <%=pi^i%><%}%>'))
+#' str(Pandoc.brew(text='<*for (i in 1:5) {*>
+#' Pi has a lot (<*=i*>) of power: <*=pi^i*><*}*>'))
 #' }
 Pandoc.brew <- function(file = stdin(), output = stdout(), convert = FALSE, open = TRUE,
                         graph.name, graph.dir, graph.hi.res = FALSE, text = NULL,
@@ -140,9 +140,9 @@ Pandoc.brew <- function(file = stdin(), output = stdout(), convert = FALSE, open
 
             if (type == 'inline') {
 
-                localstorage[[length(localstorage)]]$text <- list(raw = paste0(localstorage.last$text$raw, paste0('<%=', r$src, '%>')), #nolint
+                localstorage[[length(localstorage)]]$text <- list(raw = paste0(localstorage.last$text$raw, paste0('<*=', r$src, '*>')), #nolint
                                                                   eval = paste0(localstorage.last$text$eval, r.pander)) #nolint
-                localstorage[[length(localstorage)]]$chunks <- list(raw = c(localstorage.last$chunks$raw, paste0('<%=', r$src, '%>')), #nolint
+                localstorage[[length(localstorage)]]$chunks <- list(raw = c(localstorage.last$chunks$raw, paste0('<*=', r$src, '*>')), #nolint
                                                                     eval = c(localstorage.last$chunks$eval, ifelse(length(r.pander) == 0, '', r.pander))) #nolint
                 localstorage[[length(localstorage)]]$msg <- list(messages = c(localstorage.last$msg$messages, r$msg$messages), #nolint
                                                                  warnings = c(localstorage.last$msg$warnings, r$msg$warnings), #nolint
@@ -196,9 +196,9 @@ BRCOMMENT <- 3
 BRCATCODE <- 4
 DELIM <- list()
 DELIM[[BRTEXT]] <- c('', '')
-DELIM[[BRCODE]] <- c('<%', '%>')
-DELIM[[BRCOMMENT]] <- c('<%#', '%>')
-DELIM[[BRCATCODE]] <- c('<%=', '%>')
+DELIM[[BRCODE]] <- c('<*', '*>')
+DELIM[[BRCOMMENT]] <- c('<*#', '*>')
+DELIM[[BRCATCODE]] <- c('<*=', '*>')
 
 #' Patched brew
 #'
@@ -206,7 +206,7 @@ DELIM[[BRCATCODE]] <- c('<%=', '%>')
 #'
 #' This custom function can do more and also less compared to the original \code{brew} package. First of all the internal caching mechanism (and other, from \code{pander} package POV needless features) of `brew` is removed for some extra profits:
 #' \itemize{
-#'      \item multiple R expressions can be passed between \code{<\%= ... \%>} tags,
+#'      \item multiple R expressions can be passed between \code{<*= ... *>} tags,
 #'      \item the text of the file and also the evaluated R objects are (invisibly) returned in a structured list, which can be really useful while post-processing the results of `brew`.
 #' }
 #' @param text character vector
@@ -253,7 +253,7 @@ DELIM[[BRCATCODE]] <- c('<%=', '%>')
                     text[textLen + 1] <- spl[1]
                     textLen <- textLen + 1
                 }
-                line <- paste(spl[-1], collapse = '<%')
+                line <- paste(spl[-1], collapse = '<*')
 
                 ## We know we've found this so far, so go ahead and set up state.
                 state <- BRCODE
@@ -277,12 +277,12 @@ DELIM[[BRCATCODE]] <- c('<%=', '%>')
                 line <- ''
             }
         } else {
-            if (regexpr('%>', line, perl = TRUE) > 0){
-                spl <- strsplit(line, '%>', fixed = TRUE)[[1]]
-                line <- paste(spl[-1], collapse = '%>')
+            if (regexpr('*>', line, perl = TRUE) > 0){
+                spl <- strsplit(line, '*>', fixed = TRUE)[[1]]
+                line <- paste(spl[-1], collapse = '*>')
 
                 n <- nchar(spl[1])
-                ## test  for '-' immediately preceding %> will strip trailing newline from line
+                ## test  for '-' immediately preceding *> will strip trailing newline from line
                 if (n > 0) {
                     if (substr(spl[1], n, n) == '-') {
                         line <- substr(line, 1, nchar(line) - 1)
@@ -304,7 +304,7 @@ DELIM[[BRCATCODE]] <- c('<%=', '%>')
                 }
                 textStart <- textLen + 1
                 state <- BRTEXT
-            } else if (regexpr('<%', line, perl = TRUE) > 0){
+            } else if (regexpr('<*', line, perl = TRUE) > 0){
                 stop('Oops! Someone forgot to close a tag. We saw: ',
                      DELIM[[state]][1], ' and we need ',
                      DELIM[[state]][2])
@@ -355,10 +355,10 @@ DELIM[[BRCATCODE]] <- c('<%=', '%>')
                     localstorage <- c(localstorage[-length(localstorage)],
                                       list(list(type = 'text',
                                            text = list(
-                                               raw  = paste0('<%=', localstorage.last$robject$src,  '%>', localtext),
+                                               raw  = paste0('<*=', localstorage.last$robject$src,  '*>', localtext),
                                                eval = paste0(localstorage.last.pander, localtext)),
                                            chunks = list(
-                                               raw = paste0('<%=', localstorage.last$robject$src,  '%>'),
+                                               raw = paste0('<*=', localstorage.last$robject$src,  '*>'),
                                                eval = localstorage.last.pander
                                                ),
                                            msg = list(
